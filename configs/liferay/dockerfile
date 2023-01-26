@@ -1,0 +1,17 @@
+ARG BASE_IMG=liferaytest:latest
+ARG BUNDLE_DIR=./liferaybundle
+ARG VERSION=liferay7.4
+
+FROM $BASE_IMG
+
+COPY $BUNDLE_DIR ~/liferaybundle
+
+WORKDIR ~/app
+
+RUN blade init $VERSION
+RUN echo 'liferay.home.dir=`/liferaybundle' >> gradle.properties
+
+EXPOSE 8080
+
+CDM blade start sever -t
+

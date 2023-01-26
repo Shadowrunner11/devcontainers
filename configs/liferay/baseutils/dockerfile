@@ -1,0 +1,40 @@
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+
+RUN apt-get update
+RUN apt-get install sudo -y
+RUN apt-get install curl -y
+RUN apt-get install git -y
+RUN apt-get install openjdk-11-jdk -y
+
+RUN groupadd --gid $USER_GID liferaydev
+
+RUN useradd --uid $USER_UID --gid $USER_GID -ms /bin/bash liferaydev
+RUN usermod -aG sudo liferaydev
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+USER liferaydev
+
+RUN curl -fsSL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+RUN sudo apt-get install -y nodejs
+
+WORKDIR /home/liferaydev
+
+SHELL ["/bin/bash", "-c"]
+RUN echo $'export JAVA_HOME="/usr/lib/jvm/java-11-openjdk-amd64"\n\
+export PATH=$PATH:$JAVA_HOME/bin \n\
+export NPM_PACKAGES=/home/liferaydev/.npm-global \n\
+export PATH=$PATH:$NPM_PACKAGES/bin \n\
+export PATH=$PATH:/home/liferaydev/jpm/bin' >> .bashrc
+
+RUN curl -L https://raw.githubusercontent.com/liferay/liferay-blade-cli/master/cli/installers/local | sh
+
+RUN npm config set prefix '~/.npm-global'
+RUN npm cache clean --force
+RUN npm install -g yo
+RUN npm install -g gulp
+RUN npm install -g generator-liferay-theme
+
